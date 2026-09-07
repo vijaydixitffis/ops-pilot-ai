@@ -1,0 +1,128 @@
+/* ============================================================
+   OpsPilot AI — global styles
+   StratifyIT.ai design system tokens (colors_and_type.css),
+   fonts self-hosted via @fontsource per the DS production note.
+   ============================================================ */
+@import '@fontsource/syne/600.css';
+@import '@fontsource/syne/700.css';
+@import '@fontsource/syne/800.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+@import 'tailwindcss';
+
+:root {
+  /* ---- Brand palette ---- */
+  --sky: #1a6fb5;
+  --sky-bright: #2f8fdb;
+  --sky-deep: #145a93;
+  --slate: #2c3e50;
+  --grey: #6b7a8d;
+  --ghost: #e4e8ed;
+  --ghost-2: #f4f6f9;
+  --ink: #0d1117;
+  --ink-2: #141e2c;
+  --white: #ffffff;
+
+  /* ---- Sky tint ramp ---- */
+  --sky-50: #eef5fb;
+  --sky-100: #d6e6f4;
+  --sky-200: #aacce8;
+  --sky-300: #6ba6d6;
+  --sky-700: #0f4570;
+
+  /* ---- Neutral ramp ---- */
+  --n-100: #e4e8ed;
+  --n-200: #cfd6df;
+  --n-300: #aab4c0;
+  --n-400: #8794a3;
+
+  /* ---- Semantic ---- */
+  --success: #2f8f6b;
+  --warning: #b07d1a;
+  --danger: #c0473a;
+  --info: #1a6fb5;
+
+  /* ---- Foreground (on light) ---- */
+  --fg-1: #0d1117;
+  --fg-2: #2c3e50;
+  --fg-3: #6b7a8d;
+  --fg-4: #8794a3;
+
+  /* ---- Foreground (on ink) ---- */
+  --fgd-1: #ffffff;
+  --fgd-2: #c5d0dd;
+  --fgd-3: #8899aa;
+  --fgd-4: #5a6b7e;
+
+  /* ---- Surfaces ---- */
+  --surface: #ffffff;
+  --surface-sunk: #f4f6f9;
+  --surface-dark: #0d1117;
+  --surface-dark-2: #141e2c;
+  --border: #e4e8ed;
+  --border-strong: #cfd6df;
+  --border-dark: #22384e;
+
+  /* ---- Typography ---- */
+  --font-display: 'Syne', system-ui, sans-serif;
+  --font-text: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  --t-h2: 700 clamp(24px, 2.6vw, 34px) / 1.12 var(--font-display);
+  --t-h3: 700 20px/1.2 var(--font-display);
+  --t-small: 400 14px/1.5 var(--font-text);
+  --t-mono: 500 13px/1.5 var(--font-mono);
+
+  /* ---- Radii ---- */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-pill: 999px;
+
+  /* ---- Shadows ---- */
+  --sh-sm: 0 1px 3px rgba(13, 17, 23, 0.08), 0 1px 2px rgba(13, 17, 23, 0.04);
+  --sh-md: 0 4px 16px rgba(20, 30, 44, 0.08), 0 1px 3px rgba(20, 30, 44, 0.05);
+  --sh-lg: 0 12px 36px rgba(20, 30, 44, 0.12), 0 3px 8px rgba(20, 30, 44, 0.06);
+  --sh-sky: 0 10px 30px rgba(26, 111, 181, 0.28);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-text);
+  color: var(--fg-1);
+  background: var(--ghost-2);
+}
+
+a {
+  color: var(--sky);
+}
+a:hover {
+  color: var(--sky-bright);
+}
+
+select,
+input,
+textarea,
+button {
+  font-family: var(--font-text);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fadeUp 0.3s ease;
+}

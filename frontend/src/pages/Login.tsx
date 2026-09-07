@@ -1,0 +1,201 @@
+import { useNavigate } from 'react-router-dom'
+import { useDemo } from '../state/DemoStore'
+import { StratifyLogo } from '../components/StratifyLogo'
+import zenartLogo from '../assets/zenart-logo.png'
+
+export function Login() {
+  const demo = useDemo()
+  const navigate = useNavigate()
+
+  const goL1 = () => {
+    demo.setRole('l1')
+    navigate('/l1/queue')
+  }
+  const goAdmin = () => {
+    demo.setRole('admin')
+    navigate('/admin/overview')
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background:
+          'radial-gradient(900px 500px at 80% 10%, rgba(47,143,219,.22), transparent 60%), #0d1117',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '22px 32px',
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 800,
+            fontSize: 20,
+            color: '#fff',
+          }}
+        >
+          OpsPilot AI
+        </span>
+      </div>
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 28,
+          padding: 24,
+        }}
+      >
+        <div
+          style={{
+            width: 'min(420px, 92vw)',
+            background: 'var(--white)',
+            borderRadius: 'var(--r-lg)',
+            boxShadow: 'var(--sh-lg)',
+            padding: '40px 36px',
+            boxSizing: 'border-box',
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
+              marginBottom: 6,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 800,
+                fontSize: 32,
+                lineHeight: 1.06,
+                color: 'var(--fg-2)',
+              }}
+            >
+              OpsPilot <span style={{ color: 'var(--sky)' }}>AI</span>
+            </div>
+          </div>
+          <div style={{ font: 'var(--t-small)', color: 'var(--fg-3)', marginBottom: 30 }}>
+            L1 support workflow automation — proof of concept
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              marginBottom: 22,
+            }}
+          >
+            {/* Decorative only in the prototype — real auth arrives with the Supabase backend */}
+            <input
+              placeholder="Username"
+              style={{
+                padding: '12px 14px',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--r-sm)',
+                fontSize: 15,
+                outline: 'none',
+              }}
+            />
+            <input
+              placeholder="Password"
+              type="password"
+              style={{
+                padding: '12px 14px',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--r-sm)',
+                fontSize: 15,
+                outline: 'none',
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <button
+              onClick={goL1}
+              style={{
+                width: '100%',
+                height: 48,
+                background: 'var(--sky)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 'var(--r-sm)',
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxShadow: 'var(--sh-sky)',
+              }}
+            >
+              Continue as L1 — Priya Shah
+            </button>
+            <button
+              onClick={goAdmin}
+              style={{
+                width: '100%',
+                height: 48,
+                background: 'transparent',
+                color: 'var(--fg-2)',
+                border: '1px solid var(--border-strong)',
+                borderRadius: 'var(--r-sm)',
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Continue as Admin — Marcus Webb
+            </button>
+          </div>
+        </div>
+        <div
+          style={{
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 12, color: 'var(--fgd-3)' }}>by</span>
+            <img
+              src={zenartLogo}
+              alt="Zen &amp; Art"
+              style={{
+                height: 26,
+                width: 'auto',
+                display: 'block',
+                background: '#fff',
+                borderRadius: 4,
+                padding: '3px 8px',
+              }}
+            />
+            <span style={{ fontSize: 13, color: 'var(--fgd-3)' }}>+</span>
+            <StratifyLogo size={20} fontSize={16} on="dark" />
+          </div>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              navigate('/simulator')
+            }}
+            style={{ font: 'var(--t-small)', color: 'var(--fgd-3)', textDecoration: 'underline' }}
+          >
+            Open external systems simulator →
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
