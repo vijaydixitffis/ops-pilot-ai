@@ -1,7 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useDemo } from '../state/DemoStore'
-import { StratifyLogo } from './StratifyLogo'
-import zenartLogo from '../assets/zenart-logo.png'
+import { BrandSidebar } from './BrandSidebar'
 
 interface NavItem {
   path: string
@@ -35,56 +34,7 @@ export function AppShell() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       {/* Left nav */}
-      <div
-        style={{
-          width: 220,
-          flexShrink: 0,
-          background: 'var(--ink)',
-          color: 'var(--fgd-2)',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '20px 14px',
-          boxSizing: 'border-box',
-          gap: 2,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-            padding: '0 8px 20px 8px',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 800,
-              fontSize: 17,
-              color: '#fff',
-            }}
-          >
-            OpsPilot AI
-          </span>
-          <span style={{ fontSize: 10, color: 'var(--fgd-3)' }}>by</span>
-          <img
-            src={zenartLogo}
-            alt="Zen &amp; Art"
-            style={{
-              height: 26,
-              width: 'auto',
-              display: 'block',
-              background: '#fff',
-              borderRadius: 4,
-              padding: '3px 8px',
-              alignSelf: 'flex-start',
-            }}
-          />
-          <div style={{ marginTop: 2 }}>
-            <StratifyLogo size={22} fontSize={15} on="dark" />
-          </div>
-        </div>
-
+      <BrandSidebar>
         {nav.map((item) => {
           const active =
             pathname === item.path || (item.alsoActive ?? []).some((p) => pathname.startsWith(p))
@@ -126,7 +76,7 @@ export function AppShell() {
             External simulator ↗
           </a>
         </div>
-      </div>
+      </BrandSidebar>
 
       {/* Main column */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>

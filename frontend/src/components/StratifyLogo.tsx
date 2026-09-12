@@ -13,9 +13,9 @@ export function StratifyLogo({
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: Math.round(size * 0.35) }}>
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="2" y="14" width="20" height="4" rx="2" fill="var(--sky-deep)" />
-        <rect x="5" y="9" width="14" height="4" rx="2" fill="var(--sky)" />
-        <rect x="8" y="4" width="8" height="4" rx="2" fill="var(--sky-bright)" />
+        <rect x="2" y="6" width="20" height="4" rx="2" fill="var(--sky-deep)" />
+        <rect x="5" y="11" width="14" height="4" rx="2" fill="var(--sky)" />
+        <rect x="8" y="16" width="8" height="4" rx="2" fill="var(--sky-bright)" />
       </svg>
       <span
         style={{

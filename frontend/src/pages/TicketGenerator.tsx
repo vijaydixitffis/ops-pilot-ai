@@ -4,6 +4,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useDemo, type GenTab, type MonScenario } from '../state/DemoStore'
 import { MON_ALERTS } from '../data/useCases'
+import { BrandSidebar } from '../components/BrandSidebar'
 
 const TICKET_TABS: { key: GenTab; label: string }[] = [
   { key: 'servicenow', label: 'ServiceNow' },
@@ -70,14 +71,17 @@ export function TicketGenerator() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#eef0f2',
-        fontFamily: 'Arial, Helvetica, sans-serif',
-        color: '#2a2f36',
-      }}
-    >
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <BrandSidebar />
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          background: '#eef0f2',
+          fontFamily: 'Arial, Helvetica, sans-serif',
+          color: '#2a2f36',
+        }}
+      >
       <div
         style={{
           background: '#3a4048',
@@ -94,11 +98,12 @@ export function TicketGenerator() {
           href="#"
           onClick={(e) => {
             e.preventDefault()
+            demo.signOut()
             navigate('/')
           }}
           style={{ color: '#9fb0c0', fontSize: 13 }}
         >
-          ← Back to login
+          Log out
         </a>
       </div>
 
@@ -347,6 +352,7 @@ export function TicketGenerator() {
             </button>
           </div>
         )}
+      </div>
       </div>
     </div>
   )
