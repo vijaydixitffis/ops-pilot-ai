@@ -8,7 +8,7 @@
 // ============================================================
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { MON_ALERTS, type UseCaseId } from '../data/useCases'
+import { MON_ALERTS } from '../data/useCases'
 import { supabase, fetchProfile } from '../lib/supabaseClient'
 
 export type Role = 'l1' | 'admin'
@@ -16,9 +16,21 @@ export type GenTab = 'servicenow' | 'jira' | 'email' | 'monitoring'
 export type MonScenario = 'vdisk' | 'nic' | 'cpu'
 
 export interface FireConfirmation {
-  uc: UseCaseId
+  kind: 'ticket' | 'alert'
   alertId: string
   liveTicketId?: string
+}
+
+export interface TicketPayload {
+  source: GenTab
+  ticket_id: string
+  short_description: string
+  long_description: string
+  requester: string
+  priority: string
+  ci: string
+  product: string
+  inject_failure: string | null
 }
 
 interface DemoState {
@@ -36,7 +48,7 @@ interface DemoActions {
   setMonScenario: (s: MonScenario) => void
   setGlobalInject: (v: string) => void
   fireAlert: () => void
-  submitTicket: () => void
+  submitTicket: (payload: TicketPayload) => void
   clearFireConfirmation: () => void
   signOut: () => void
 }
@@ -114,7 +126,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           cpu: 'esxi20.shared.trintech.host',
         }
         const alertId = ids[uc]
-        setState((prev) => ({ ...prev, fireConfirmation: { uc, alertId } }))
+        setState((prev) => ({ ...prev, fireConfirmation: { kind: 'alert', alertId } }))
         supabase.functions
           .invoke('ingest-ticket', {
             body: {
@@ -138,23 +150,13 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           })
           .catch((err) => console.error('ingest-ticket failed', err))
       },
-      submitTicket: () => {
-        const s = stateRef.current
-        setState((prev) => ({ ...prev, fireConfirmation: { uc: 'cert', alertId: 'INC0012345' } }))
+      submitTicket: (payload) => {
+        setState((prev) => ({
+          ...prev,
+          fireConfirmation: { kind: 'ticket', alertId: payload.ticket_id },
+        }))
         supabase.functions
-          .invoke('ingest-ticket', {
-            body: {
-              source: 'servicenow',
-              ticket_id: 'INC0012345',
-              short_description: 'LDAP authentication failing on IDPA Wilmington',
-              long_description: 'Users report LDAP login failures on uswilbu1.corp.riotinto.org...',
-              requester: 'carl.vale@riotinto.com',
-              priority: 'P2',
-              ci: 'uswilbu1.corp.riotinto.org',
-              product: 'Avamar',
-              inject_failure: s.globalInject === 'dc_unreachable' ? s.globalInject : null,
-            },
-          })
+          .invoke('ingest-ticket', { body: payload })
           .then(({ data }) => {
             const ticketId = data?.ticket?.id
             if (ticketId) {
