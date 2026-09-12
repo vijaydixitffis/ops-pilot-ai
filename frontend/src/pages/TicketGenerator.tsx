@@ -93,7 +93,7 @@ export function TicketGenerator() {
           fontSize: 13,
         }}
       >
-        <span>External systems simulator — not part of OpsPilot AI</span>
+        <span>Not part of OpsPilot AI</span>
         <a
           href="#"
           onClick={(e) => {
@@ -108,6 +108,9 @@ export function TicketGenerator() {
       </div>
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px' }}>
+        <div style={{ font: 'var(--t-h2)', color: 'var(--fg-2)', marginBottom: 20 }}>
+          External Systems Simulator
+        </div>
         <div style={{ display: 'flex', gap: 2, marginBottom: 0, borderBottom: '2px solid #c7ccd2' }}>
           {TICKET_TABS.map((t) => (
             <div key={t.key} onClick={() => demo.setGenTab(t.key)} style={tabStyle(t.key)}>
