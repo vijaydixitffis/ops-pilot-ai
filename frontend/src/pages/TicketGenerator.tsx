@@ -64,10 +64,9 @@ export function TicketGenerator() {
   }
 
   const openFiredInL1 = () => {
-    if (!demo.fireConfirmation) return
-    demo.setRole('l1')
-    demo.selectUseCase(demo.fireConfirmation.uc)
-    navigate('/l1/ticket')
+    if (demo.fireConfirmation?.liveTicketId) {
+      navigate(`/l1/ticket/live/${demo.fireConfirmation.liveTicketId}`)
+    }
   }
 
   return (
@@ -332,6 +331,7 @@ export function TicketGenerator() {
             </div>
             <button
               onClick={openFiredInL1}
+              disabled={!demo.fireConfirmation.liveTicketId}
               style={{
                 background: '#2c3e50',
                 color: '#fff',
@@ -339,10 +339,11 @@ export function TicketGenerator() {
                 padding: '9px 16px',
                 borderRadius: 4,
                 fontSize: 13,
-                cursor: 'pointer',
+                cursor: demo.fireConfirmation.liveTicketId ? 'pointer' : 'default',
+                opacity: demo.fireConfirmation.liveTicketId ? 1 : 0.6,
               }}
             >
-              Open in L1 console →
+              {demo.fireConfirmation.liveTicketId ? 'Open in L1 console →' : 'Routing…'}
             </button>
           </div>
         )}

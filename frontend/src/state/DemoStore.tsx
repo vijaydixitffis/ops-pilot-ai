@@ -1,40 +1,29 @@
 // ============================================================
-// OpsPilot AI — prototype state store
-// All demo state lives client-side, mirroring the design
-// prototype's single-component state. In a later step this is
-// replaced by the Supabase backend: tickets/agent_runs fetched
-// via the API, step reveal driven by a realtime stream, and
-// approve/reject/flag/reset hitting real endpoints (see the
-// handoff doc, Appendix B2).
+// OpsPilot AI — app-wide session/UI state.
+// Tickets, execution, and outcomes all live in Supabase now
+// (see lib/useLiveTickets.ts, lib/supabaseClient.ts, and
+// pages/L1Console/LiveTicketDetail.tsx). This store only holds
+// the signed-in role/label and the external-systems-simulator
+// form state.
 // ============================================================
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useContext, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { buildTimeline, type TimelineStep, type UseCaseId } from '../data/useCases'
+import { MON_ALERTS, type UseCaseId } from '../data/useCases'
+import { supabase } from '../lib/supabaseClient'
 
 export type Role = 'l1' | 'admin'
 export type GenTab = 'servicenow' | 'jira' | 'email' | 'monitoring'
 export type MonScenario = 'vdisk' | 'nic' | 'cpu'
-export type LayoutMode = 'A' | 'B'
-
-export interface FlagEntry {
-  reason: string
-  at: string
-}
 
 export interface FireConfirmation {
   uc: UseCaseId
   alertId: string
+  liveTicketId?: string
 }
 
 interface DemoState {
   role: Role | null
-  activeUseCase: UseCaseId
-  layoutMode: LayoutMode
-  stepIndex: Record<UseCaseId, number>
-  injectedUC: Partial<Record<UseCaseId, boolean>>
-  rebootPct: Partial<Record<UseCaseId, number>>
-  flagged: Record<string, FlagEntry>
-  reviewed: Record<string, boolean>
+  accountLabel: string | null
   genTab: GenTab
   monScenario: MonScenario
   globalInject: string
@@ -42,16 +31,7 @@ interface DemoState {
 }
 
 interface DemoActions {
-  timelineFor: (ucId: UseCaseId) => TimelineStep[]
-  setRole: (role: Role | null) => void
-  selectUseCase: (ucId: UseCaseId) => void
-  setLayoutMode: (mode: LayoutMode) => void
-  advance: (ucId?: UseCaseId) => void
-  approveGate: () => void
-  rejectGate: () => void
-  flagTicket: (id: string) => void
-  markReviewed: (id: string) => void
-  resetDemo: () => void
+  setRole: (role: Role | null, accountLabel?: string | null) => void
   setGenTab: (tab: GenTab) => void
   setMonScenario: (s: MonScenario) => void
   setGlobalInject: (v: string) => void
@@ -62,137 +42,106 @@ interface DemoActions {
 
 export type DemoStore = DemoState & DemoActions
 
-const INITIAL_STEP_INDEX: Record<UseCaseId, number> = { vdisk: 4, cpu: 5, nic: 4, cert: 4 }
-
 const DemoContext = createContext<DemoStore | null>(null)
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DemoState>({
     role: null,
-    activeUseCase: 'vdisk',
-    layoutMode: 'A',
-    stepIndex: { ...INITIAL_STEP_INDEX },
-    injectedUC: {},
-    rebootPct: {},
-    flagged: {},
-    reviewed: {},
+    accountLabel: null,
     genTab: 'monitoring',
     monScenario: 'vdisk',
     globalInject: 'none',
     fireConfirmation: null,
   })
   const stateRef = useRef(state)
-  useEffect(() => {
-    stateRef.current = state
-  }, [state])
+  stateRef.current = state
 
-  const timelineFor = useCallback(
-    (ucId: UseCaseId) => buildTimeline(ucId, !!stateRef.current.injectedUC[ucId]),
-    [],
-  )
-
-  const startReboot = useCallback((ucId: UseCaseId) => {
-    setState((s) => ({ ...s, rebootPct: { ...s.rebootPct, [ucId]: 0 } }))
-    const iv = setInterval(() => {
-      setState((s) => {
-        const pct = Math.min(100, (s.rebootPct[ucId] ?? 0) + 8)
-        if (pct >= 100) {
-          clearInterval(iv)
-          setTimeout(() => advanceRef.current(ucId), 300)
-        }
-        return { ...s, rebootPct: { ...s.rebootPct, [ucId]: pct } }
-      })
-    }, 150)
-  }, [])
-
-  const advance = useCallback(
-    (ucIdArg?: UseCaseId) => {
-      const s = stateRef.current
-      const uc = ucIdArg ?? s.activeUseCase
-      const tl = buildTimeline(uc, !!s.injectedUC[uc])
-      const idx = Math.min((s.stepIndex[uc] ?? 4) + 1, tl.length - 1)
-      setState((prev) => ({ ...prev, stepIndex: { ...prev.stepIndex, [uc]: idx } }))
-      // When the step now pending is a delayed action (reboot/restart),
-      // kick off its progress simulation; on completion it advances again.
-      const pendingNext = tl[idx + 1]
-      if (pendingNext && pendingNext.kind === 'exec' && pendingNext.delayed) startReboot(uc)
-    },
-    [startReboot],
-  )
-  const advanceRef = useRef<(ucIdArg?: UseCaseId) => void>(() => {})
-  useEffect(() => {
-    advanceRef.current = advance
-  }, [advance])
-
-  const approveGate = useCallback(() => advance(), [advance])
-
-  const rejectGate = useCallback(() => {
-    const s = stateRef.current
-    const uc = s.activeUseCase
-    const tl = buildTimeline(uc, !!s.injectedUC[uc])
-    setState((prev) => ({ ...prev, stepIndex: { ...prev.stepIndex, [uc]: tl.length - 1 } }))
-  }, [])
-
-  const actions = useMemo<Omit<DemoActions, 'timelineFor' | 'advance' | 'approveGate' | 'rejectGate'>>(
+  const actions = useMemo<DemoActions>(
     () => ({
-      setRole: (role) => setState((s) => ({ ...s, role })),
-      selectUseCase: (ucId) => setState((s) => ({ ...s, activeUseCase: ucId })),
-      setLayoutMode: (mode) => setState((s) => ({ ...s, layoutMode: mode })),
-      flagTicket: (id) =>
-        setState((s) => ({
-          ...s,
-          flagged: { ...s.flagged, [id]: { reason: 'Outcome looked incorrect', at: 'just now' } },
-        })),
-      markReviewed: (id) => setState((s) => ({ ...s, reviewed: { ...s.reviewed, [id]: true } })),
-      resetDemo: () =>
-        setState((s) => ({
-          ...s,
-          stepIndex: { ...INITIAL_STEP_INDEX },
-          injectedUC: {},
-          flagged: {},
-          reviewed: {},
-          rebootPct: {},
-        })),
+      setRole: (role, accountLabel = null) => setState((s) => ({ ...s, role, accountLabel })),
       setGenTab: (tab) => setState((s) => ({ ...s, genTab: tab, fireConfirmation: null })),
       setMonScenario: (mon) =>
         setState((s) => ({ ...s, monScenario: mon, fireConfirmation: null })),
       setGlobalInject: (v) => setState((s) => ({ ...s, globalInject: v })),
-      fireAlert: () =>
-        setState((s) => {
-          const uc = s.monScenario
-          const ids: Record<MonScenario, string> = {
-            vdisk: 'ALT-88213',
-            nic: 'ALT-77120',
-            cpu: 'ALT-90042',
-          }
-          const injectMap: Record<MonScenario, string> = {
-            vdisk: 'vdisk_degraded',
-            nic: 'nic_persists',
-            cpu: 'cpu_high',
-          }
-          return {
-            ...s,
-            fireConfirmation: { uc, alertId: ids[uc] },
-            injectedUC: { ...s.injectedUC, [uc]: s.globalInject === injectMap[uc] },
-            stepIndex: { ...s.stepIndex, [uc]: 4 },
-          }
-        }),
-      submitTicket: () =>
-        setState((s) => ({
-          ...s,
-          fireConfirmation: { uc: 'cert', alertId: 'INC0012345' },
-          injectedUC: { ...s.injectedUC, cert: s.globalInject === 'dc_unreachable' },
-          stepIndex: { ...s.stepIndex, cert: 4 },
-        })),
+      fireAlert: () => {
+        const s = stateRef.current
+        const uc = s.monScenario
+        const ids: Record<MonScenario, string> = {
+          vdisk: 'ALT-88213',
+          nic: 'ALT-77120',
+          cpu: 'ALT-90042',
+        }
+        const injectMap: Record<MonScenario, string> = {
+          vdisk: 'vdisk_degraded',
+          nic: 'nic_persists',
+          cpu: 'cpu_high',
+        }
+        const hostMap: Record<MonScenario, string> = {
+          vdisk: 'node12',
+          nic: 'ash-flex1-tor35',
+          cpu: 'esxi20.shared.trintech.host',
+        }
+        const alertId = ids[uc]
+        setState((prev) => ({ ...prev, fireConfirmation: { uc, alertId } }))
+        supabase.functions
+          .invoke('ingest-ticket', {
+            body: {
+              source: 'monitoring',
+              alert_id: alertId,
+              raw_alert: MON_ALERTS[uc],
+              host: hostMap[uc],
+              inject_failure: s.globalInject === injectMap[uc] ? s.globalInject : null,
+            },
+          })
+          .then(({ data }) => {
+            const ticketId = data?.ticket?.id
+            if (ticketId) {
+              setState((prev) => ({
+                ...prev,
+                fireConfirmation: prev.fireConfirmation
+                  ? { ...prev.fireConfirmation, liveTicketId: ticketId }
+                  : prev.fireConfirmation,
+              }))
+            }
+          })
+          .catch((err) => console.error('ingest-ticket failed', err))
+      },
+      submitTicket: () => {
+        const s = stateRef.current
+        setState((prev) => ({ ...prev, fireConfirmation: { uc: 'cert', alertId: 'INC0012345' } }))
+        supabase.functions
+          .invoke('ingest-ticket', {
+            body: {
+              source: 'servicenow',
+              ticket_id: 'INC0012345',
+              short_description: 'LDAP authentication failing on IDPA Wilmington',
+              long_description: 'Users report LDAP login failures on uswilbu1.corp.riotinto.org...',
+              requester: 'carl.vale@riotinto.com',
+              priority: 'P2',
+              ci: 'uswilbu1.corp.riotinto.org',
+              product: 'Avamar',
+              inject_failure: s.globalInject === 'dc_unreachable' ? s.globalInject : null,
+            },
+          })
+          .then(({ data }) => {
+            const ticketId = data?.ticket?.id
+            if (ticketId) {
+              setState((prev) => ({
+                ...prev,
+                fireConfirmation: prev.fireConfirmation
+                  ? { ...prev.fireConfirmation, liveTicketId: ticketId }
+                  : prev.fireConfirmation,
+              }))
+            }
+          })
+          .catch((err) => console.error('ingest-ticket failed', err))
+      },
       clearFireConfirmation: () => setState((s) => ({ ...s, fireConfirmation: null })),
     }),
     [],
   )
 
-  const store = useMemo<DemoStore>(
-    () => ({ ...state, ...actions, timelineFor, advance, approveGate, rejectGate }),
-    [state, actions, timelineFor, advance, approveGate, rejectGate],
-  )
+  const store = useMemo<DemoStore>(() => ({ ...state, ...actions }), [state, actions])
 
   return <DemoContext.Provider value={store}>{children}</DemoContext.Provider>
 }

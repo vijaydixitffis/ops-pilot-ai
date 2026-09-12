@@ -1,13 +1,8 @@
-import { useDemo } from '../../state/DemoStore'
+import { useState } from 'react'
 import { ConfidenceBadge } from '../../components/badges'
-import { UC_ORDER, USE_CASES, type ConfidenceBand } from '../../data/useCases'
-
-const STATS = [
-  { value: '4', label: 'Total tickets (POC scenarios)' },
-  { value: '1', label: 'Auto-resolved' },
-  { value: '2', label: 'Guided (pending/completed)' },
-  { value: '1', label: 'Escalated' },
-]
+import type { ConfidenceBand } from '../../data/useCases'
+import { useLiveTickets } from '../../lib/useLiveTickets'
+import { supabase } from '../../lib/supabaseClient'
 
 const BAND_ROWS: { band: ConfidenceBand; score: string; action: string }[] = [
   { band: 'High', score: '>85%', action: 'Auto-resolve or answer; notify user; log outcome' },
@@ -16,7 +11,29 @@ const BAND_ROWS: { band: ConfidenceBand; score: string; action: string }[] = [
 ]
 
 export function Overview() {
-  const demo = useDemo()
+  const { tickets: liveTickets, loading } = useLiveTickets()
+  const [resetting, setResetting] = useState(false)
+  const [resetMsg, setResetMsg] = useState<string | null>(null)
+
+  const liveAuto = liveTickets.filter((t) => t.status === 'auto_resolved' || t.status === 'resolved').length
+  const liveGuided = liveTickets.filter((t) => t.status === 'needs_approval' || t.status === 'in_progress').length
+  const liveEscalated = liveTickets.filter((t) => t.status === 'escalated').length
+  const liveByUseCase = liveTickets.reduce<Record<string, number>>((acc, t) => {
+    if (t.use_case) acc[t.use_case] = (acc[t.use_case] ?? 0) + 1
+    return acc
+  }, {})
+  const maxLiveCount = Math.max(1, ...Object.values(liveByUseCase))
+
+  const resetMockState = async () => {
+    setResetting(true)
+    setResetMsg(null)
+    try {
+      const { error } = await supabase.functions.invoke('admin-reset-demo', { body: {} })
+      setResetMsg(error ? `Failed: ${error.message}` : 'Mock device state reset to initial condition.')
+    } finally {
+      setResetting(false)
+    }
+  }
 
   return (
     <>
@@ -34,20 +51,25 @@ export function Overview() {
             All tickets, all L1s, all sources
           </div>
         </div>
-        <button
-          onClick={demo.resetDemo}
-          style={{
-            background: 'transparent',
-            border: '1px solid var(--border-strong)',
-            color: 'var(--fg-2)',
-            padding: '8px 16px',
-            borderRadius: 'var(--r-sm)',
-            fontSize: 13,
-            cursor: 'pointer',
-          }}
-        >
-          Reset demo state
-        </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {resetMsg && <span style={{ fontSize: 12, color: 'var(--fg-3)' }}>{resetMsg}</span>}
+          <button
+            onClick={resetMockState}
+            disabled={resetting}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--border-strong)',
+              color: 'var(--fg-2)',
+              padding: '8px 16px',
+              borderRadius: 'var(--r-sm)',
+              fontSize: 13,
+              cursor: resetting ? 'default' : 'pointer',
+              opacity: resetting ? 0.6 : 1,
+            }}
+          >
+            {resetting ? 'Resetting…' : 'Reset mock device state'}
+          </button>
+        </div>
       </div>
 
       <div
@@ -58,7 +80,12 @@ export function Overview() {
           marginBottom: 28,
         }}
       >
-        {STATS.map((s) => (
+        {[
+          { value: String(liveTickets.length), label: 'Total tickets' },
+          { value: String(liveAuto), label: 'Auto-resolved' },
+          { value: String(liveGuided), label: 'Guided (pending/in progress)' },
+          { value: String(liveEscalated), label: 'Escalated' },
+        ].map((s) => (
           <div
             key={s.label}
             style={{
@@ -78,7 +105,7 @@ export function Overview() {
                 letterSpacing: '-0.03em',
               }}
             >
-              {s.value}
+              {loading ? '…' : s.value}
             </div>
             <div style={{ fontSize: 13, color: 'var(--fg-3)', marginTop: 4 }}>{s.label}</div>
           </div>
@@ -129,37 +156,34 @@ export function Overview() {
         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg-2)', marginBottom: 16 }}>
           Volume by use case
         </div>
-        {UC_ORDER.map((id) => (
-          <div
-            key={id}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}
-          >
-            <span
-              style={{ width: 170, fontSize: 13, color: 'var(--fg-2)', flexShrink: 0 }}
-            >
-              {USE_CASES[id].label}
-            </span>
-            <div
-              style={{
-                flex: 1,
-                background: 'var(--surface-sunk)',
-                borderRadius: 'var(--r-pill)',
-                height: 10,
-                overflow: 'hidden',
-              }}
-            >
+        {Object.keys(liveByUseCase).length === 0 ? (
+          <div style={{ fontSize: 13, color: 'var(--fg-4)' }}>No tickets yet.</div>
+        ) : (
+          Object.entries(liveByUseCase).map(([useCase, count]) => (
+            <div key={useCase} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+              <span style={{ width: 170, fontSize: 13, color: 'var(--fg-2)', flexShrink: 0 }}>{useCase}</span>
               <div
                 style={{
-                  height: '100%',
-                  width: '25%',
-                  background: 'var(--sky)',
+                  flex: 1,
+                  background: 'var(--surface-sunk)',
                   borderRadius: 'var(--r-pill)',
+                  height: 10,
+                  overflow: 'hidden',
                 }}
-              />
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${(count / maxLiveCount) * 100}%`,
+                    background: 'var(--sky)',
+                    borderRadius: 'var(--r-pill)',
+                  }}
+                />
+              </div>
+              <span style={{ width: 20, fontSize: 13, color: 'var(--fg-3)' }}>{count}</span>
             </div>
-            <span style={{ width: 20, fontSize: 13, color: 'var(--fg-3)' }}>1</span>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </>
   )

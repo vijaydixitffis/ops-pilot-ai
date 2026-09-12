@@ -5,7 +5,7 @@ import { Login } from './pages/Login'
 import { TicketGenerator } from './pages/TicketGenerator'
 import { MyQueue } from './pages/L1Console/MyQueue'
 import { AutoResolvedMonitor } from './pages/L1Console/AutoResolvedMonitor'
-import { TicketDetail } from './pages/L1Console/TicketDetail'
+import { LiveTicketDetail } from './pages/L1Console/LiveTicketDetail'
 import { Overview } from './pages/AdminDashboard/Overview'
 import { RunHistory } from './pages/AdminDashboard/RunHistory'
 import { VendorCases } from './pages/AdminDashboard/VendorCases'
@@ -21,12 +21,12 @@ export default function App() {
           <Route element={<AppShell />}>
             <Route path="/l1/queue" element={<MyQueue />} />
             <Route path="/l1/auto" element={<AutoResolvedMonitor />} />
-            <Route path="/l1/ticket" element={<TicketDetail />} />
+            <Route path="/l1/ticket/live/:id" element={<LiveTicketDetail />} />
+            <Route path="/admin/ticket/live/:id" element={<LiveTicketDetail showControls={false} />} />
             <Route path="/admin/overview" element={<Overview />} />
             <Route path="/admin/history" element={<RunHistory />} />
             <Route path="/admin/vendor-cases" element={<VendorCases />} />
             <Route path="/admin/feedback" element={<FeedbackReview />} />
-            <Route path="/admin/audit" element={<TicketDetail showControls={false} />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -1,19 +1,33 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDemo } from '../state/DemoStore'
 import { StratifyLogo } from '../components/StratifyLogo'
 import zenartLogo from '../assets/zenart-logo.png'
+import { supabase, fetchProfile } from '../lib/supabaseClient'
 
 export function Login() {
   const demo = useDemo()
   const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
 
-  const goL1 = () => {
-    demo.setRole('l1')
-    navigate('/l1/queue')
-  }
-  const goAdmin = () => {
-    demo.setRole('admin')
-    navigate('/admin/overview')
+  const signIn = async () => {
+    setAuthError(null)
+    setBusy(true)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+      const profile = await fetchProfile(data.user.id)
+      const label = `Logged in as: ${profile.role === 'admin' ? 'Admin' : 'L1'} — ${profile.full_name}`
+      demo.setRole(profile.role, label)
+      navigate(profile.role === 'admin' ? '/admin/overview' : '/l1/queue')
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : 'Sign in failed')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -99,9 +113,10 @@ export function Login() {
               marginBottom: 22,
             }}
           >
-            {/* Decorative only in the prototype — real auth arrives with the Supabase backend */}
             <input
-              placeholder="Username"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               style={{
                 padding: '12px 14px',
                 border: '1px solid var(--border)',
@@ -113,6 +128,9 @@ export function Login() {
             <input
               placeholder="Password"
               type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && signIn()}
               style={{
                 padding: '12px 14px',
                 border: '1px solid var(--border)',
@@ -122,9 +140,15 @@ export function Login() {
               }}
             />
           </div>
+          {authError && (
+            <div style={{ font: 'var(--t-small)', color: '#c0473a', marginBottom: 14 }}>
+              {authError}
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button
-              onClick={goL1}
+              onClick={signIn}
+              disabled={busy}
               style={{
                 width: '100%',
                 height: 48,
@@ -134,27 +158,12 @@ export function Login() {
                 borderRadius: 'var(--r-sm)',
                 fontSize: 15,
                 fontWeight: 600,
-                cursor: 'pointer',
+                cursor: busy ? 'default' : 'pointer',
+                opacity: busy ? 0.7 : 1,
                 boxShadow: 'var(--sh-sky)',
               }}
             >
-              Continue as L1 — Priya Shah
-            </button>
-            <button
-              onClick={goAdmin}
-              style={{
-                width: '100%',
-                height: 48,
-                background: 'transparent',
-                color: 'var(--fg-2)',
-                border: '1px solid var(--border-strong)',
-                borderRadius: 'var(--r-sm)',
-                fontSize: 15,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Continue as Admin — Marcus Webb
+              {busy ? 'Signing in…' : 'Sign in'}
             </button>
           </div>
         </div>

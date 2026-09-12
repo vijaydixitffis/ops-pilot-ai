@@ -29,9 +29,9 @@ export function AppShell() {
 
   const isAdmin = demo.role === 'admin'
   const nav = isAdmin ? ADMIN_NAV : L1_NAV
-  const roleBadgeText = isAdmin
-    ? 'Logged in as: Admin — Marcus Webb'
-    : 'Logged in as: L1 — Priya Shah'
+  const roleBadgeText =
+    demo.accountLabel ??
+    (isAdmin ? 'Logged in as: Admin — Marcus Webb' : 'Logged in as: L1 — Priya Shah')
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>

@@ -1,0 +1,24 @@
+{
+  "name": "ops-pilot-ai",
+  "version": "1.0.0",
+  "description": "**OpsPilot AI** is a proof-of-concept for confidence-gated L1 support triage and auto-remediation, presented as a collaborative initiative between **StratifyIT.ai** and **Zen & Art**.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vijaydixitffis/ops-pilot-ai.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/vijaydixitffis/ops-pilot-ai/issues"
+  },
+  "homepage": "https://github.com/vijaydixitffis/ops-pilot-ai#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0"
+  }
+}
