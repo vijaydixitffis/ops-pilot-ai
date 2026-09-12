@@ -1,3 +1,4 @@
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { handleOptions, jsonResponse } from '../_shared/cors.ts'
 import { serviceClient } from '../_shared/db.ts'
 import { invokeFn } from '../_shared/invoke.ts'
@@ -11,14 +12,29 @@ Deno.serve(async (req) => {
   const payload = await req.json()
   const supabase = serviceClient()
 
-  // POC has a single L1 account — auto-assign every incoming ticket/alert to
-  // it so RLS (assigned_to = auth.uid()) lets the L1 console see it.
-  const { data: l1Profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('role', 'l1')
-    .limit(1)
-    .maybeSingle()
+  // Assign the ticket to whoever is signed in and firing it from the
+  // simulator — the simulator is now only reachable from inside a logged-in
+  // session (opened in a new tab, sharing that session), so the caller's own
+  // JWT identifies them.
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const callerClient = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authHeader } } },
+  )
+  const { data: userData } = await callerClient.auth.getUser()
+  let assignedTo = userData?.user?.id ?? null
+
+  // Fallback for unauthenticated calls (e.g. direct API testing): pick any L1.
+  if (!assignedTo) {
+    const { data: l1Profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('role', 'l1')
+      .limit(1)
+      .maybeSingle()
+    assignedTo = l1Profile?.id ?? null
+  }
 
   const { data: ticket, error } = await supabase.from('tickets').insert({
     source: payload.source,
@@ -31,7 +47,7 @@ Deno.serve(async (req) => {
     ci: payload.ci ?? payload.host,
     product: payload.product,
     inject_failure: payload.inject_failure ?? null,
-    assigned_to: l1Profile?.id ?? null,
+    assigned_to: assignedTo,
   }).select().single()
 
   if (error) return jsonResponse({ error: error.message }, 400)

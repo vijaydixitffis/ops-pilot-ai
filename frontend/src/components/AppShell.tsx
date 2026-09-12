@@ -30,6 +30,7 @@ export function AppShell() {
   const isAdmin = demo.role === 'admin'
   const nav = isAdmin ? ADMIN_NAV : L1_NAV
   const roleBadgeText = demo.accountLabel ?? 'Not signed in'
+  const simulatorUrl = `${window.location.origin}${window.location.pathname}#/simulator`
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -117,11 +118,9 @@ export function AppShell() {
           }}
         >
           <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault()
-              navigate('/simulator')
-            }}
+            href={simulatorUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{ fontSize: 12, color: 'var(--fgd-3)' }}
           >
             External simulator ↗

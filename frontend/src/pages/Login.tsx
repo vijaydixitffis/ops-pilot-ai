@@ -193,16 +193,6 @@ export function Login() {
             <span style={{ fontSize: 13, color: 'var(--fgd-3)' }}>+</span>
             <StratifyLogo size={20} fontSize={16} on="dark" />
           </div>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault()
-              navigate('/simulator')
-            }}
-            style={{ font: 'var(--t-small)', color: 'var(--fgd-3)', textDecoration: 'underline' }}
-          >
-            Open external systems simulator →
-          </a>
         </div>
       </div>
     </div>
