@@ -29,9 +29,7 @@ export function AppShell() {
 
   const isAdmin = demo.role === 'admin'
   const nav = isAdmin ? ADMIN_NAV : L1_NAV
-  const roleBadgeText =
-    demo.accountLabel ??
-    (isAdmin ? 'Logged in as: Admin — Marcus Webb' : 'Logged in as: L1 — Priya Shah')
+  const roleBadgeText = demo.accountLabel ?? 'Not signed in'
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -81,8 +79,8 @@ export function AppShell() {
               alignSelf: 'flex-start',
             }}
           />
-          <div style={{ transform: 'scaleX(.7)', transformOrigin: 'left center', marginTop: 2 }}>
-            <StratifyLogo size={11} fontSize={9} on="dark" />
+          <div style={{ marginTop: 2 }}>
+            <StratifyLogo size={22} fontSize={15} on="dark" />
           </div>
         </div>
 
@@ -164,12 +162,12 @@ export function AppShell() {
             href="#"
             onClick={(e) => {
               e.preventDefault()
-              demo.setRole(null)
+              demo.signOut()
               navigate('/')
             }}
             style={{ fontSize: 13, color: 'var(--fg-3)', whiteSpace: 'nowrap' }}
           >
-            Switch role
+            Log out
           </a>
         </div>
 

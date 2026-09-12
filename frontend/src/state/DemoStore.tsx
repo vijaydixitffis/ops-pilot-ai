@@ -6,10 +6,10 @@
 // the signed-in role/label and the external-systems-simulator
 // form state.
 // ============================================================
-import { createContext, useContext, useMemo, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { MON_ALERTS, type UseCaseId } from '../data/useCases'
-import { supabase } from '../lib/supabaseClient'
+import { supabase, fetchProfile } from '../lib/supabaseClient'
 
 export type Role = 'l1' | 'admin'
 export type GenTab = 'servicenow' | 'jira' | 'email' | 'monitoring'
@@ -38,6 +38,7 @@ interface DemoActions {
   fireAlert: () => void
   submitTicket: () => void
   clearFireConfirmation: () => void
+  signOut: () => void
 }
 
 export type DemoStore = DemoState & DemoActions
@@ -56,9 +57,40 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const stateRef = useRef(state)
   stateRef.current = state
 
+  // Restore/track the Supabase Auth session so a page reload or a direct
+  // link doesn't lose the signed-in role/name (React state resets on reload,
+  // the Supabase session in localStorage does not).
+  useEffect(() => {
+    async function syncFromSession(userId: string | undefined) {
+      if (!userId) {
+        setState((s) => ({ ...s, role: null, accountLabel: null }))
+        return
+      }
+      try {
+        const profile = await fetchProfile(userId)
+        const label = `Logged in as: ${profile.role === 'admin' ? 'Admin' : 'L1'} — ${profile.full_name}`
+        setState((s) => ({ ...s, role: profile.role, accountLabel: label }))
+      } catch {
+        setState((s) => ({ ...s, role: null, accountLabel: null }))
+      }
+    }
+
+    supabase.auth.getSession().then(({ data }) => syncFromSession(data.session?.user.id))
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncFromSession(session?.user.id)
+    })
+
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
   const actions = useMemo<DemoActions>(
     () => ({
       setRole: (role, accountLabel = null) => setState((s) => ({ ...s, role, accountLabel })),
+      signOut: () => {
+        supabase.auth.signOut()
+        setState((s) => ({ ...s, role: null, accountLabel: null }))
+      },
       setGenTab: (tab) => setState((s) => ({ ...s, genTab: tab, fireConfirmation: null })),
       setMonScenario: (mon) =>
         setState((s) => ({ ...s, monScenario: mon, fireConfirmation: null })),
