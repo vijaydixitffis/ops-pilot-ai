@@ -13,6 +13,7 @@ export type RiskTier =
   | 'write'
   | 'write_downtime'
   | 'write_reboot'
+  | 'write_disruptive'
   | 'diagnostic_only'
 export type StepKind = 'intake' | 'triage' | 'kb' | 'plan' | 'exec' | 'gate' | 'outcome'
 export type OutcomeType = 'closed' | 'escalated' | 'awaiting'
@@ -81,6 +82,7 @@ export const TIER_META: Record<RiskTier, { color: string; bg: string; label: str
   write: { color: '#8a5c12', bg: '#faf1e0', label: 'Write' },
   write_downtime: { color: '#8a5c12', bg: '#f7e6c8', label: 'Write + downtime' },
   write_reboot: { color: '#9a3226', bg: '#fbe4e0', label: 'Write + reboot' },
+  write_disruptive: { color: '#8a5c12', bg: '#f7e6c8', label: 'Write + disruptive' },
   diagnostic_only: { color: '#382f70', bg: '#ece9f7', label: 'Diagnostic only' },
 }
 

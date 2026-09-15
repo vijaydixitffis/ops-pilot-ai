@@ -6,14 +6,13 @@
 // the signed-in role/label and the external-systems-simulator
 // form state.
 // ============================================================
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { MON_ALERTS } from '../data/useCases'
 import { supabase, fetchProfile } from '../lib/supabaseClient'
 
 export type Role = 'l1' | 'admin'
 export type GenTab = 'servicenow' | 'jira' | 'email' | 'monitoring'
-export type MonScenario = 'vdisk' | 'nic' | 'cpu'
+export type MonScenario = 'vdisk' | 'nic' | 'cpu' | 'disk' | 'network'
 
 export interface FireConfirmation {
   kind: 'ticket' | 'alert'
@@ -33,6 +32,13 @@ export interface TicketPayload {
   inject_failure: string | null
 }
 
+export interface AlertPayload {
+  alert_id: string
+  raw_alert: string
+  host: string
+  inject_failure: string | null
+}
+
 interface DemoState {
   role: Role | null
   accountLabel: string | null
@@ -47,7 +53,7 @@ interface DemoActions {
   setGenTab: (tab: GenTab) => void
   setMonScenario: (s: MonScenario) => void
   setGlobalInject: (v: string) => void
-  fireAlert: () => void
+  fireAlert: (payload: AlertPayload) => void
   submitTicket: (payload: TicketPayload) => void
   clearFireConfirmation: () => void
   signOut: () => void
@@ -62,13 +68,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     role: null,
     accountLabel: null,
     genTab: 'monitoring',
-    monScenario: 'vdisk',
+    monScenario: 'disk',
     globalInject: 'none',
     fireConfirmation: null,
   })
-  const stateRef = useRef(state)
-  stateRef.current = state
-
   // Restore/track the Supabase Auth session so a page reload or a direct
   // link doesn't lose the signed-in role/name (React state resets on reload,
   // the Supabase session in localStorage does not).
@@ -107,36 +110,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setMonScenario: (mon) =>
         setState((s) => ({ ...s, monScenario: mon, fireConfirmation: null })),
       setGlobalInject: (v) => setState((s) => ({ ...s, globalInject: v })),
-      fireAlert: () => {
-        const s = stateRef.current
-        const uc = s.monScenario
-        const ids: Record<MonScenario, string> = {
-          vdisk: 'ALT-88213',
-          nic: 'ALT-77120',
-          cpu: 'ALT-90042',
-        }
-        const injectMap: Record<MonScenario, string> = {
-          vdisk: 'vdisk_degraded',
-          nic: 'nic_persists',
-          cpu: 'cpu_high',
-        }
-        const hostMap: Record<MonScenario, string> = {
-          vdisk: 'node12',
-          nic: 'ash-flex1-tor35',
-          cpu: 'esxi20.shared.trintech.host',
-        }
-        const alertId = ids[uc]
-        setState((prev) => ({ ...prev, fireConfirmation: { kind: 'alert', alertId } }))
+      fireAlert: (payload) => {
+        setState((prev) => ({ ...prev, fireConfirmation: { kind: 'alert', alertId: payload.alert_id } }))
         supabase.functions
-          .invoke('ingest-ticket', {
-            body: {
-              source: 'monitoring',
-              alert_id: alertId,
-              raw_alert: MON_ALERTS[uc],
-              host: hostMap[uc],
-              inject_failure: s.globalInject === injectMap[uc] ? s.globalInject : null,
-            },
-          })
+          .invoke('ingest-ticket', { body: { source: 'monitoring', ...payload } })
           .then(({ data }) => {
             const ticketId = data?.ticket?.id
             if (ticketId) {

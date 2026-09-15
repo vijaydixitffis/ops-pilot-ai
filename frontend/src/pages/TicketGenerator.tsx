@@ -4,7 +4,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDemo, type GenTab, type MonScenario } from '../state/DemoStore'
-import { MON_ALERTS } from '../data/useCases'
 import { BrandSidebar } from '../components/BrandSidebar'
 
 const TICKET_TABS: { key: GenTab; label: string }[] = [
@@ -14,7 +13,13 @@ const TICKET_TABS: { key: GenTab; label: string }[] = [
   { key: 'monitoring', label: 'Monitoring alert' },
 ]
 
-type TicketScenarioKey = 'cert_renewal' | 'log_collection'
+type TicketScenarioKey =
+  | 'cert_renewal'
+  | 'log_collection'
+  | 'password_reset_lockout'
+  | 'vpn_connection_failure'
+  | 'mailbox_over_quota'
+  | 'laptop_no_power'
 
 interface TicketScenario {
   label: string
@@ -28,6 +33,56 @@ interface TicketScenario {
 }
 
 const TICKET_SCENARIOS: Record<TicketScenarioKey, TicketScenario> = {
+  password_reset_lockout: {
+    label: 'Account locked out — Active Directory (clean)',
+    short: 'User cannot log in, account locked out',
+    long: 'jsmith reports their account is locked out after several failed login attempts. Worked fine yesterday.',
+    requester: 'jsmith@corp.example.com',
+    ci: 'jsmith',
+    product: 'ActiveDirectory',
+    priority: 'P3',
+    injectOptions: [
+      { value: 'none', label: 'None (single lockout, recognized workstation)' },
+      { value: 'repeat_lockout_unrecognized_ip', label: '2nd lockout this hour, unrecognized IP' },
+    ],
+  },
+  vpn_connection_failure: {
+    label: 'VPN connection failure',
+    short: 'Cannot connect to corporate VPN',
+    long: 'kwilliams reports the VPN client times out / hangs at connecting, or shows a certificate error.',
+    requester: 'kwilliams@corp.example.com',
+    ci: 'kwilliams',
+    product: 'VPNGateway',
+    priority: 'P3',
+    injectOptions: [
+      { value: 'none', label: 'None (client outdated / cert reissue — guided)' },
+      { value: 'vpn_gateway_outage', label: 'Gateway shows active incident (multiple users)' },
+    ],
+  },
+  mailbox_over_quota: {
+    label: 'Mailbox over quota — Exchange Online',
+    short: 'Mailbox full, cannot send or receive email',
+    long: 'kwilliams mailbox has exceeded its storage quota and can no longer send or receive email.',
+    requester: 'kwilliams@corp.example.com',
+    ci: 'kwilliams@corp.example.com',
+    product: 'ExchangeOnline',
+    priority: 'P3',
+    injectOptions: [
+      { value: 'none', label: 'None (Deleted Items purge resolves it)' },
+      { value: 'cleanup_insufficient', label: 'Purge insufficient — needs archive move' },
+      { value: 'mailbox_rapid_growth', label: 'Unusually rapid growth (possible compromise)' },
+    ],
+  },
+  laptop_no_power: {
+    label: 'Laptop will not power on',
+    short: 'Laptop will not power on',
+    long: 'User reports laptop shows no lights, no fan noise, no response to power button, screen stays black even plugged in.',
+    requester: 'user@corp.example.com',
+    ci: 'AST-40221',
+    product: 'EndpointAsset',
+    priority: 'P2',
+    injectOptions: [{ value: 'none', label: 'None (always diagnose → escalate)' }],
+  },
   cert_renewal: {
     label: 'Certificate expiry / LDAP login failing — Avamar',
     short: 'LDAP authentication failing on IDPA Wilmington',
@@ -55,19 +110,66 @@ const TICKET_SCENARIOS: Record<TicketScenarioKey, TicketScenario> = {
 
 const PRIORITIES = ['P1', 'P2', 'P3', 'P4']
 
-const MON_INJECT_OPTIONS: Record<MonScenario, { value: string; label: string }[]> = {
-  vdisk: [
-    { value: 'none', label: 'None' },
-    { value: 'vdisk_degraded', label: 'Virtual disk stays degraded' },
-  ],
-  nic: [
-    { value: 'none', label: 'None' },
-    { value: 'nic_persists', label: 'NIC issue persists' },
-  ],
-  cpu: [
-    { value: 'none', label: 'None' },
-    { value: 'cpu_high', label: 'CPU stays high' },
-  ],
+interface MonAlertScenario {
+  label: string
+  alertId: string
+  rawAlert: string
+  host: string
+  injectOptions: { value: string; label: string }[]
+}
+
+const MON_SCENARIOS: Record<MonScenario, MonAlertScenario> = {
+  disk: {
+    label: 'Server disk space alert — WindowsServer',
+    alertId: 'ALT-DISK01',
+    rawAlert: 'diskmon-::(capacity):: C:\\ on APPSRV02 at 94% used (threshold 90%)',
+    host: 'APPSRV02:C',
+    injectOptions: [
+      { value: 'none', label: 'None (safe cleanup resolves it)' },
+      { value: 'cleanup_insufficient', label: 'Cleanup insufficient — propose volume extend' },
+      { value: 'disk_rapid_growth', label: 'Rapid growth (>5%/hour)' },
+    ],
+  },
+  network: {
+    label: 'Network port down — switch',
+    alertId: 'ALT-77121',
+    rawAlert: 'switchmon-::(portdown):: Gi1/0/24 on SW-FLR4-02 is down',
+    host: 'SW-FLR4-02:Gi1/0/24',
+    injectOptions: [
+      { value: 'none', label: 'None (port flap succeeds)' },
+      { value: 'flap_fails', label: 'Flap fails, port stays down' },
+    ],
+  },
+  vdisk: {
+    label: 'Virtual disk degraded — iDRAC/PowerFlex',
+    alertId: 'ALT-88213',
+    rawAlert: 'idrac-::(availability):: iDRAC Virtual Disk Disk.Virtual.0:BOSS.SL.12-1 health is degraded.',
+    host: 'node12',
+    injectOptions: [
+      { value: 'none', label: 'None' },
+      { value: 'vdisk_degraded', label: 'Virtual disk stays degraded' },
+    ],
+  },
+  nic: {
+    label: 'NIC port down — Ethernet1/2',
+    alertId: 'ALT-77120',
+    rawAlert: 'ash-flex1-tor35::(portdown):: Ethernet1/2 on esxi-node14 is down',
+    host: 'ash-flex1-tor35',
+    injectOptions: [
+      { value: 'none', label: 'None' },
+      { value: 'nic_persists', label: 'NIC issue persists' },
+    ],
+  },
+  cpu: {
+    label: 'Host CPU usage — vCenter',
+    alertId: 'ALT-90042',
+    rawAlert: 'esxi20.shared.trintech.host::(HostSystem):: Host CPU usage',
+    host: 'esxi20.shared.trintech.host',
+    injectOptions: [
+      { value: 'none', label: 'None' },
+      { value: 'cpu_high', label: 'CPU stays high' },
+    ],
+  },
 }
 
 // Plain-English explanation of what each inject-failure option does — shown
@@ -85,6 +187,18 @@ const INJECT_HELP: Record<string, string> = {
     'Simulates the NIC issue persisting after a port flap — confidence drops and the ticket is escalated immediately (this matches the real scenario, where the correct outcome is a vendor case, not a retry).',
   cpu_high:
     'Simulates CPU usage staying pinned above threshold — confidence drops and the ticket is escalated immediately rather than closed as a false positive.',
+  repeat_lockout_unrecognized_ip:
+    'Simulates a 2nd lockout within the hour from an unrecognized workstation — confidence drops and the ticket is escalated to Security immediately; the account is not unlocked.',
+  vpn_gateway_outage:
+    'Simulates the VPN gateway showing an active incident affecting multiple users — confidence drops and the ticket is escalated to network/infra immediately, no client-side fix is attempted.',
+  cleanup_insufficient:
+    'The agent actually runs its safe cleanup step, then discovers it wasn’t enough — this triggers a real approval gate mid-run (not a shortcut), proposing the next step for a human to approve.',
+  disk_rapid_growth:
+    'Simulates usage growing faster than 5%/hour — confidence drops and the ticket is escalated immediately without attempting cleanup, matching the "possible runaway process" guardrail.',
+  mailbox_rapid_growth:
+    'Simulates unusually rapid mailbox growth (possible mail loop or compromised account) — confidence drops and the ticket is escalated to Security immediately, no cleanup is attempted.',
+  flap_fails:
+    'The agent still attempts the port flap for real, then discovers the port stays down — matching the real scenario where a cabling/hardware fault needs a physical dispatch, not a retry.',
 }
 
 const fieldStyle: React.CSSProperties = {
@@ -106,7 +220,7 @@ export function TicketGenerator() {
   const demo = useDemo()
   const navigate = useNavigate()
 
-  const [scenarioKey, setScenarioKey] = useState<TicketScenarioKey>('cert_renewal')
+  const [scenarioKey, setScenarioKey] = useState<TicketScenarioKey>('password_reset_lockout')
   const scenario = TICKET_SCENARIOS[scenarioKey]
   const [priority, setPriority] = useState(scenario.priority)
   const [shortDesc, setShortDesc] = useState(scenario.short)
@@ -135,6 +249,17 @@ export function TicketGenerator() {
       priority,
       ci,
       product: scenario.product,
+      inject_failure: demo.globalInject !== 'none' ? demo.globalInject : null,
+    })
+  }
+
+  const monScenario = MON_SCENARIOS[demo.monScenario]
+
+  const fireAlert = () => {
+    demo.fireAlert({
+      alert_id: monScenario.alertId,
+      raw_alert: monScenario.rawAlert,
+      host: monScenario.host,
       inject_failure: demo.globalInject !== 'none' ? demo.globalInject : null,
     })
   }
@@ -168,12 +293,6 @@ export function TicketGenerator() {
       borderBottom: '2px solid #fff',
       color: '#2a2f36',
       marginBottom: -2,
-    }
-  }
-
-  const openFiredInL1 = () => {
-    if (demo.fireConfirmation?.liveTicketId) {
-      navigate(`/l1/ticket/live/${demo.fireConfirmation.liveTicketId}`)
     }
   }
 
@@ -387,9 +506,11 @@ export function TicketGenerator() {
                     color: '#e2e6ea',
                   }}
                 >
-                  <option value="vdisk">Virtual disk degraded — iDRAC/PowerFlex</option>
-                  <option value="nic">NIC port down — Ethernet1/2</option>
-                  <option value="cpu">Host CPU usage — vCenter</option>
+                  {Object.entries(MON_SCENARIOS).map(([key, s]) => (
+                    <option key={key} value={key}>
+                      {s.label}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
@@ -406,7 +527,7 @@ export function TicketGenerator() {
                     color: '#e2e6ea',
                   }}
                 >
-                  {MON_INJECT_OPTIONS[demo.monScenario].map((opt) => (
+                  {monScenario.injectOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
@@ -419,7 +540,7 @@ export function TicketGenerator() {
             </div>
             <textarea
               readOnly
-              value={MON_ALERTS[demo.monScenario]}
+              value={monScenario.rawAlert}
               rows={3}
               style={{
                 width: '100%',
@@ -436,7 +557,7 @@ export function TicketGenerator() {
             />
             <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
               <button
-                onClick={demo.fireAlert}
+                onClick={fireAlert}
                 style={{
                   background: '#2f8fdb',
                   color: '#0d1117',
@@ -476,9 +597,13 @@ export function TicketGenerator() {
               ✓ Fired {demo.fireConfirmation.kind === 'ticket' ? 'ticket ' : 'alert '}
               {demo.fireConfirmation.alertId} — now routed to the L1 queue.
             </div>
-            <button
-              onClick={openFiredInL1}
-              disabled={!demo.fireConfirmation.liveTicketId}
+            <a
+              href={
+                demo.fireConfirmation.liveTicketId
+                  ? `${window.location.origin}${window.location.pathname}#/l1/ticket/live/${demo.fireConfirmation.liveTicketId}`
+                  : undefined
+              }
+              target="opspilot-l1-console"
               style={{
                 background: '#2c3e50',
                 color: '#fff',
@@ -486,12 +611,15 @@ export function TicketGenerator() {
                 padding: '9px 16px',
                 borderRadius: 4,
                 fontSize: 13,
+                textDecoration: 'none',
+                display: 'inline-block',
                 cursor: demo.fireConfirmation.liveTicketId ? 'pointer' : 'default',
                 opacity: demo.fireConfirmation.liveTicketId ? 1 : 0.6,
+                pointerEvents: demo.fireConfirmation.liveTicketId ? 'auto' : 'none',
               }}
             >
               {demo.fireConfirmation.liveTicketId ? 'Open in L1 console →' : 'Routing…'}
-            </button>
+            </a>
           </div>
         )}
       </div>

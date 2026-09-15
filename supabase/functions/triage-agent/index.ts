@@ -4,6 +4,8 @@ import { logEvent, serviceClient } from '../_shared/db.ts'
 
 const USE_CASES = [
   'cert_renewal', 'log_collection', 'virtual_disk_degraded', 'nic_replacement', 'cpu_usage_alert',
+  'password_reset_lockout', 'disk_space_alert', 'vpn_connection_failure', 'mailbox_over_quota',
+  'laptop_no_power', 'network_port_down',
 ] as const
 
 Deno.serve(async (req) => {
@@ -22,7 +24,16 @@ Deno.serve(async (req) => {
   const result = await callLLM({
     system: `You are the triage agent for an ops-automation platform. Classify the incoming ticket
 or monitoring alert text into exactly one of these use cases: ${USE_CASES.join(', ')}.
-Also extract the affected device/host identifier and product if present.
+
+Distinguishing guidance for the end-user-facing use cases:
+- "can't log in", "account locked out", "password not working" -> password_reset_lockout
+- "disk full", "volume at X% used", "low disk space" on a server -> disk_space_alert
+- "can't connect to VPN", "VPN times out", "certificate error connecting to VPN" -> vpn_connection_failure
+- "mailbox full", "can't send/receive email", "over quota" -> mailbox_over_quota
+- "laptop won't turn on", "no lights/fan, won't power on" -> laptop_no_power
+- "no network at my desk", switch port down alert -> network_port_down
+
+Also extract the affected device/host/username/mailbox identifier and product if present.
 Return a confidence score between 0 and 1 for how certain you are of the classification.`,
     userText: text,
     schema: {

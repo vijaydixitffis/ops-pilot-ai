@@ -1,8 +1,14 @@
 import { handleOptions, jsonResponse } from '../_shared/cors.ts'
 import { logEvent, serviceClient } from '../_shared/db.ts'
 
-const RISK_ORDER = ['read_only', 'diagnostic_only', 'write', 'write_downtime', 'write_reboot']
-const AUTONOMOUS_RISK_TIERS = new Set(['read_only', 'diagnostic_only'])
+// write_disruptive sits above write (client-facing disruption, e.g. VPN
+// reconfig or mailbox archiving) but below the infrastructure-impact tiers.
+const RISK_ORDER = ['read_only', 'diagnostic_only', 'write', 'write_disruptive', 'write_downtime', 'write_reboot']
+// Plain "write" is included here for the new low-risk auto-resolve use cases
+// (account unlock, disk cleanup) — every existing use case's overall risk
+// tier was already dominated by write_downtime/write_reboot/diagnostic_only,
+// so this doesn't change their behavior.
+const AUTONOMOUS_RISK_TIERS = new Set(['read_only', 'diagnostic_only', 'write'])
 
 function band(score: number): 'high' | 'medium' | 'low' {
   if (score > 0.85) return 'high'

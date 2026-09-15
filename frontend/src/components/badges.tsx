@@ -27,7 +27,7 @@ export function ConfidenceBadge({
 }
 
 export function RiskTierPill({ tier }: { tier: RiskTier }) {
-  const m = TIER_META[tier]
+  const m = TIER_META[tier] ?? { color: 'var(--fg-3)', bg: 'var(--surface-sunk)', label: tier }
   return (
     <span
       style={{

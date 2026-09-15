@@ -4,6 +4,18 @@ import { invokeFn } from '../_shared/invoke.ts'
 
 const supabase = serviceClient()
 
+// inject_failure values meant to represent the "escalate variant" of a
+// scenario short-circuit straight to escalation (low confidence, no
+// execution attempted) — matching how the original 5 use cases' inject
+// toggles work. Other inject_failure values (e.g. "cleanup_insufficient")
+// are "ambiguous variant" markers the executor itself branches on after
+// actually running its steps — those are NOT in this set, so confidence
+// stays high and execution proceeds normally.
+const HARD_ESCALATE_INJECTS = new Set([
+  'dc_unreachable', 'vdisk_degraded', 'nic_persists', 'cpu_high',
+  'repeat_lockout_unrecognized_ip', 'disk_rapid_growth', 'vpn_gateway_outage', 'mailbox_rapid_growth',
+])
+
 // Runs the full triage -> retrieval -> planner -> executor pipeline for a
 // freshly ingested ticket/alert.
 async function runPipeline(ticketId: string) {
@@ -13,7 +25,7 @@ async function runPipeline(ticketId: string) {
 
   const retrieval = await invokeFn('retrieval-agent', { ticket_id: ticketId, use_case: triage.use_case })
 
-  const executionConfidence = ticket.inject_failure ? 0.3 : 0.95
+  const executionConfidence = HARD_ESCALATE_INJECTS.has(ticket.inject_failure) ? 0.3 : 0.95
 
   const plan = await invokeFn('planner-agent', {
     ticket_id: ticketId,

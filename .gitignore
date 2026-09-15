@@ -22,3 +22,4 @@ npm-debug.log*
 # Design handoff source material kept alongside the repo, not committed
 handoff/
 OpsPilot-AI-POC-Handoff.md
+opsPilotAI-files/
