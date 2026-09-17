@@ -263,7 +263,7 @@ export function Login() {
               </div>
             </div>
             <div style={{ font: 'var(--t-small)', color: 'var(--fg-3)', marginBottom: 30 }}>
-              L1 support workflow automation — proof of concept
+              L1 support workflow automation
             </div>
             <div
               style={{
