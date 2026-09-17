@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDemo } from '../state/DemoStore'
 import { StratifyLogo } from '../components/StratifyLogo'
@@ -41,6 +41,23 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const prevTitle = document.title
+    document.title = 'Sign In — OpsPilot AI | AI-Powered L1 Support Automation'
+
+    const descriptionTag = document.querySelector('meta[name="description"]')
+    const prevDescription = descriptionTag?.getAttribute('content') ?? null
+    descriptionTag?.setAttribute(
+      'content',
+      'Sign in to OpsPilot AI to triage tickets, resolve them with guided playbooks, and monitor your L1 support queue in real time.',
+    )
+
+    return () => {
+      document.title = prevTitle
+      if (prevDescription !== null) descriptionTag?.setAttribute('content', prevDescription)
+    }
+  }, [])
 
   const signIn = async () => {
     setAuthError(null)
