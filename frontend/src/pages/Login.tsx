@@ -342,6 +342,12 @@ export function Login() {
                 {busy ? 'Signing in…' : 'Sign in'}
               </button>
             </div>
+            <div style={{ fontSize: 12.5, color: 'var(--fg-3)', marginTop: 18 }}>
+              For a demo contact{' '}
+              <a href="mailto:founder@StratifyIT.ai" style={{ color: 'var(--sky)', textDecoration: 'none', fontWeight: 600 }}>
+                founder@StratifyIT.ai
+              </a>
+            </div>
           </div>
           <div
             style={{
