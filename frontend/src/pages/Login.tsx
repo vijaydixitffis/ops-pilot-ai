@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDemo } from '../state/DemoStore'
 import { StratifyLogo } from '../components/StratifyLogo'
-import zenartLogo from '../assets/zenart-logo.png'
 import { supabase, fetchProfile } from '../lib/supabaseClient'
 
 const FEATURES = [
@@ -355,19 +354,6 @@ export function Login() {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 12, color: 'var(--fgd-3)' }}>by</span>
-              <img
-                src={zenartLogo}
-                alt="Zen &amp; Art"
-                style={{
-                  height: 26,
-                  width: 'auto',
-                  display: 'block',
-                  background: '#fff',
-                  borderRadius: 4,
-                  padding: '3px 8px',
-                }}
-              />
-              <span style={{ fontSize: 13, color: 'var(--fgd-3)' }}>+</span>
               <StratifyLogo size={20} fontSize={16} on="dark" />
             </div>
           </div>
