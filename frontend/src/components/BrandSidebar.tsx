@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react'
-import { StratifyLogo } from './StratifyLogo'
-import zenartLogo from '../assets/zenart-logo.png'
 
-/** The dark OpsPilot AI / co-brand sidebar, reused by AppShell (with nav
- * items) and the external systems simulator (without any). */
+/** The dark OpsPilot AI sidebar, reused by AppShell (with nav items) and
+ * the external systems simulator (without any). Co-brand logos live only
+ * on the login page, not here. */
 export function BrandSidebar({ children }: { children?: ReactNode }) {
   return (
     <div
@@ -37,23 +36,6 @@ export function BrandSidebar({ children }: { children?: ReactNode }) {
         >
           OpsPilot AI
         </span>
-        <span style={{ fontSize: 10, color: 'var(--fgd-3)' }}>by</span>
-        <img
-          src={zenartLogo}
-          alt="Zen &amp; Art"
-          style={{
-            height: 26,
-            width: 'auto',
-            display: 'block',
-            background: '#fff',
-            borderRadius: 4,
-            padding: '3px 8px',
-            alignSelf: 'flex-start',
-          }}
-        />
-        <div style={{ marginTop: 2 }}>
-          <StratifyLogo size={22} fontSize={15} on="dark" />
-        </div>
       </div>
 
       {children}
