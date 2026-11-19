@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDemo } from '../state/DemoStore'
 import { StratifyLogo } from '../components/StratifyLogo'
+import { useBrand, isNeutral, footerText } from '../brand/brand'
 import { supabase, fetchProfile } from '../lib/supabaseClient'
 
 const FEATURES = [
@@ -34,6 +35,7 @@ const BENEFITS = [
 ]
 
 export function Login() {
+  useBrand()
   const demo = useDemo()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -82,7 +84,7 @@ export function Login() {
         display: 'flex',
         flexDirection: 'column',
         background:
-          'radial-gradient(900px 500px at 80% 10%, rgba(47,143,219,.22), transparent 60%), #0d1117',
+          'var(--t-login-bg)',
       }}
     >
       <div
@@ -342,12 +344,14 @@ export function Login() {
                 {busy ? 'Signing in…' : 'Sign in'}
               </button>
             </div>
-            <div style={{ fontSize: 12.5, color: 'var(--fg-3)', marginTop: 18 }}>
-              For a demo contact{' '}
-              <a href="mailto:founder@StratifyIT.ai" style={{ color: 'var(--sky)', textDecoration: 'none', fontWeight: 600 }}>
-                founder@StratifyIT.ai
-              </a>
-            </div>
+            {!isNeutral() && (
+              <div style={{ fontSize: 12.5, color: 'var(--fg-3)', marginTop: 18 }}>
+                For a demo contact{' '}
+                <a href="mailto:founder@StratifyIT.ai" style={{ color: 'var(--sky)', textDecoration: 'none', fontWeight: 600 }}>
+                  founder@StratifyIT.ai
+                </a>
+              </div>
+            )}
           </div>
           <div
             style={{
@@ -358,10 +362,14 @@ export function Login() {
               gap: 12,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 12, color: 'var(--fgd-3)' }}>by</span>
-              <StratifyLogo size={20} fontSize={16} on="dark" />
-            </div>
+            {!isNeutral() ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 12, color: 'var(--fgd-3)' }}>by</span>
+                <StratifyLogo size={20} fontSize={16} on="dark" />
+              </div>
+            ) : (
+              <span style={{ fontSize: 12, color: 'var(--fgd-3)' }}>{footerText()}</span>
+            )}
           </div>
         </div>
       </div>

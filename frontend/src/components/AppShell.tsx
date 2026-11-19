@@ -1,6 +1,8 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useDemo } from '../state/DemoStore'
 import { BrandSidebar } from './BrandSidebar'
+import { BrandFooter } from '../brand/BrandFooter'
+import { useBrand } from '../brand/brand'
 
 interface NavItem {
   path: string
@@ -29,7 +31,9 @@ export function AppShell() {
   const isAdmin = demo.role === 'admin'
   const nav = isAdmin ? ADMIN_NAV : L1_NAV
   const roleBadgeText = demo.accountLabel ?? 'Not signed in'
-  const simulatorUrl = `${window.location.origin}${window.location.pathname}#/simulator`
+  // The simulator opens in a new tab, so carry the active theme over via ?brand= (the tab can't inherit it).
+  const { brand } = useBrand()
+  const simulatorUrl = `${window.location.origin}${window.location.pathname}?brand=${brand}#/simulator`
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -51,7 +55,7 @@ export function AppShell() {
                 fontSize: 14,
                 cursor: 'pointer',
                 ...(active
-                  ? { background: 'rgba(47,143,219,.15)', color: '#fff', fontWeight: 600 }
+                  ? { background: 'var(--t-rail-active)', color: '#fff', fontWeight: 600 }
                   : { color: 'var(--fgd-2)' }),
               }}
             >
@@ -97,8 +101,8 @@ export function AppShell() {
           <span
             style={{
               font: 'var(--t-small)',
-              background: 'var(--sky-50)',
-              color: 'var(--sky-deep)',
+              background: 'var(--t-primary-tint)',
+              color: 'var(--t-primary)',
               padding: '6px 14px',
               borderRadius: 'var(--r-pill)',
               fontWeight: 600,
@@ -132,6 +136,7 @@ export function AppShell() {
         >
           <Outlet />
         </div>
+        <BrandFooter />
       </div>
     </div>
   )

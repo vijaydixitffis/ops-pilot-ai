@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react'
+import { useBrand, productName } from '../brand/brand'
 
 /** The dark OpsPilot AI sidebar, reused by AppShell (with nav items) and
  * the external systems simulator (without any). Co-brand logos live only
  * on the login page, not here. */
 export function BrandSidebar({ children }: { children?: ReactNode }) {
+  useBrand()
   return (
     <div
       style={{
         width: 220,
         flexShrink: 0,
-        background: 'var(--ink)',
+        background: 'var(--t-rail-bg)',
         color: 'var(--fgd-2)',
         display: 'flex',
         flexDirection: 'column',
@@ -34,7 +36,7 @@ export function BrandSidebar({ children }: { children?: ReactNode }) {
             color: '#fff',
           }}
         >
-          OpsPilot AI
+          {productName('ops', 'OpsPilot AI', 'L1 Support Automation')}
         </span>
       </div>
 

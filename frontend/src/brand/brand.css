@@ -1,0 +1,90 @@
+/* StratifyIT suite: shared theme tokens.
+   One attribute switches every product: <html data-brand="neutral|stratifyit">.
+   Neutral = white-label: corporate blue + white on a greyscale base. A client's
+   colours arrive as --brand-primary / --brand-accent (set at runtime by brand.ts). */
+
+[data-brand="stratifyit"] {
+  --t-font-display: 'Syne', system-ui, sans-serif;
+  --t-font-text: 'Inter', system-ui, sans-serif;
+  --t-head-weight: 800;
+  --t-head-track: -0.02em;
+
+  --t-primary: #1a6fb5;
+  --t-primary-hover: #2f8fdb;
+  --t-primary-deep: #145a93;
+  --t-primary-tint: #eef5fb;
+  --t-accent: #2f8fdb;
+  --t-on-primary: #ffffff;
+
+  --t-rail-bg: #0d1117;
+  --t-rail-bg-2: #141e2c;
+  --t-rail-line: #22384e;
+  --t-rail-text: #c5d0dd;
+  --t-rail-active: rgba(47,143,219,0.14);
+  --t-rail-bar: #2f8fdb;
+
+  --t-hero-bg: radial-gradient(120% 90% at 85% 10%, #0f4570 0%, #141e2c 45%, #0d1117 100%);
+  --t-hero-text: #ffffff;
+  --t-hero-muted: #c5d0dd;
+
+  --t-paper: #f4f6f9;
+  --t-surface: #ffffff;
+  --t-line: #e4e8ed;
+  --t-line-strong: #cfd6df;
+  --t-ink: #0d1117;
+  --t-ink-2: #2c3e50;
+  --t-muted: #6b7a8d;
+
+  --t-ok: #256e53;  --t-ok-tint: #e6f2ec;
+  --t-warn: #8a6114; --t-warn-tint: #f7efe0;
+  --t-bad: #99382e; --t-bad-tint: #f6e4e2;
+
+  --t-radius-btn: 999px;
+  --t-radius-card: 16px;
+  --t-radius-input: 10px;
+  --t-shadow-card: 0 4px 16px rgba(20,30,44,.08), 0 1px 3px rgba(20,30,44,.05);
+  --t-shadow-cta: 0 10px 30px rgba(26,111,181,0.28);
+}
+
+[data-brand="neutral"] {
+  --t-font-display: 'IBM Plex Sans', system-ui, sans-serif;
+  --t-font-text: 'IBM Plex Sans', system-ui, sans-serif;
+  --t-head-weight: 600;
+  --t-head-track: -0.01em;
+
+  --t-primary: var(--brand-primary, #1f4e8c);
+  --t-primary-hover: color-mix(in oklab, var(--t-primary) 86%, white);
+  --t-primary-deep: color-mix(in oklab, var(--t-primary) 78%, black);
+  --t-primary-tint: color-mix(in oklab, var(--t-primary) 8%, white);
+  --t-accent: var(--brand-accent, #2e7bc4);
+  --t-on-primary: #ffffff;
+
+  --t-rail-bg: color-mix(in oklab, var(--t-primary) 72%, #0b1220);
+  --t-rail-bg-2: color-mix(in oklab, var(--t-primary) 82%, #0b1220);
+  --t-rail-line: rgba(255,255,255,0.10);
+  --t-rail-text: rgba(255,255,255,0.80);
+  --t-rail-active: rgba(255,255,255,0.10);
+  --t-rail-bar: #ffffff;
+
+  --t-hero-bg: linear-gradient(180deg, color-mix(in oklab, var(--t-primary) 72%, #0b1220) 0%, var(--t-primary) 100%);
+  --t-hero-text: #ffffff;
+  --t-hero-muted: rgba(255,255,255,0.82);
+
+  --t-paper: #f5f7fa;
+  --t-surface: #ffffff;
+  --t-line: #dde3ea;
+  --t-line-strong: #c6cfd9;
+  --t-ink: #1b2430;
+  --t-ink-2: #3a4656;
+  --t-muted: #5f6b79;
+
+  --t-ok: #1e6b47;  --t-ok-tint: #e3f1e9;
+  --t-warn: #8a5a00; --t-warn-tint: #fbf0d9;
+  --t-bad: #a3332b; --t-bad-tint: #f8e3e1;
+
+  --t-radius-btn: 6px;
+  --t-radius-card: 8px;
+  --t-radius-input: 6px;
+  --t-shadow-card: 0 1px 2px rgba(16,24,40,.06);
+  --t-shadow-cta: none;
+}

@@ -1,3 +1,6 @@
+import { BrandLogo } from '../brand/BrandLogo'
+import { isNeutral, useBrand } from '../brand/brand'
+
 // StratifyIT.ai wordmark — rendered from the design system's Logo
 // component pattern (SVG mark + Syne wordmark), not a static image.
 export function StratifyLogo({
@@ -9,6 +12,8 @@ export function StratifyLogo({
   fontSize?: number
   on?: 'dark' | 'light'
 }) {
+  useBrand()
+  if (isNeutral()) return <BrandLogo on={on} height={size} />
   const textColor = on === 'dark' ? '#ffffff' : 'var(--slate)'
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: Math.round(size * 0.35) }}>

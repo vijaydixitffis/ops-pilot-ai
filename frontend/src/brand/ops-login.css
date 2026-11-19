@@ -1,0 +1,3 @@
+/* OpsPilot login page background per theme (stratifyit = today's look). */
+[data-brand="stratifyit"] { --t-login-bg: radial-gradient(900px 500px at 80% 10%, rgba(47,143,219,.22), transparent 60%), #0d1117; }
+[data-brand="neutral"]    { --t-login-bg: var(--t-hero-bg); }
